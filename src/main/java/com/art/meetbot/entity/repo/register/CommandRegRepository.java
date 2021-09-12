@@ -9,6 +9,6 @@ import java.util.UUID;
 /**
  * @author Arthur Kupriyanov on 21.11.2020
  */
-public interface CommandRegRepo extends JpaRepository<CommandReg, UUID> {
+public interface CommandRegRepository extends JpaRepository<CommandReg, UUID> {
     Optional<CommandReg> findByChatId(Long chatId);
 }

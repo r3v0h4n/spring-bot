@@ -5,9 +5,9 @@ import com.art.meetbot.bot.handle.Sequence;
 import com.art.meetbot.bot.handle.SequenceHandler;
 import com.art.meetbot.bot.util.KeyboardFactory;
 import com.art.meetbot.entity.register.CommandReg;
-import com.art.meetbot.entity.repo.register.CommandRegRepo;
-import com.art.meetbot.entity.repo.user.MatchedPeopleRepo;
-import com.art.meetbot.entity.repo.user.UserRepo;
+import com.art.meetbot.entity.repo.register.CommandRegRepository;
+import com.art.meetbot.entity.repo.user.MatchedPeopleRepository;
+import com.art.meetbot.entity.repo.user.UserRepository;
 import com.art.meetbot.entity.user.MatchedPeople;
 import com.art.meetbot.entity.user.User;
 import com.art.meetbot.entity.user.UserInfo;
@@ -22,33 +22,32 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Sequence("searching-profiles-seq")
 @Component
 public class SearchProfilesSequence implements SequenceHandler {
-    private final CommandRegRepo commandRegRepo;
-    private final UserRepo userRepo;
-    private final MatchedPeopleRepo matchedPeopleRepo;
+    private final CommandRegRepository commandRegRepository;
+    private final UserRepository userRepository;
+    private final MatchedPeopleRepository matchedPeopleRepository;
 
-    public SearchProfilesSequence(CommandRegRepo commandRegRepo, UserRepo userRepo, MatchedPeopleRepo matchedPeopleRepo) {
-        this.commandRegRepo = commandRegRepo;
-        this.userRepo = userRepo;
-        this.matchedPeopleRepo = matchedPeopleRepo;
+    public SearchProfilesSequence(CommandRegRepository commandRegRepository, UserRepository userRepository, MatchedPeopleRepository matchedPeopleRepository) {
+        this.commandRegRepository = commandRegRepository;
+        this.userRepository = userRepository;
+        this.matchedPeopleRepository = matchedPeopleRepository;
     }
 
     @Override
     public BotApiMethod<? extends BotApiObject> handleCommand(Message message, int state) {
         log.debug("Received command " + message.getText() + " with state : " + state);
 
-        CommandReg commandReg = commandRegRepo.findByChatId(message.getChatId())
+        CommandReg commandReg = commandRegRepository.findByChatId(message.getChatId())
                 .orElseGet(() -> {
                     log.warn("Command reg is not found for chat " + message.getChatId());
                     return new CommandReg();
                 });
 
-        List<User> users = userRepo.findAll();
+        List<User> users = userRepository.findAll();
 
         if (message.getText().equals("accept")) {
             if (state != 0) {
@@ -57,17 +56,17 @@ public class SearchProfilesSequence implements SequenceHandler {
                 log.warn("user send accept on 1 question");
             }
         }
-        if (message.getText().equals("no") || userRepo.count() <= state) {
-            commandRegRepo.delete(commandReg);
+        if (message.getText().equals("no") || userRepository.count() <= state) {
+            commandRegRepository.delete(commandReg);
             return SendMessage.builder()
-                    .text("search finished\nFounded:" + (userRepo.count() - 1) + " profile")
+                    .text("search finished\nFounded:" + (userRepository.count() - 1) + " profile")
                     .chatId(String.valueOf(message.getChatId()))
                     .build();
         }
         if (users.get(state).getTelegramId().equals(message.getChatId().toString())) {
             state += 1;
             if (state >= users.size()) {
-                commandRegRepo.delete(commandReg);
+                commandRegRepository.delete(commandReg);
                 return SendMessage.builder()
                         .text("search finished\nFounded:" + (users.size() - 1) + " profile")
                         .chatId(String.valueOf(message.getChatId()))
@@ -92,18 +91,18 @@ public class SearchProfilesSequence implements SequenceHandler {
 
     private void changeState(int newState, CommandReg commandReg) {
         commandReg.setState(newState);
-        commandRegRepo.save(commandReg);
+        commandRegRepository.save(commandReg);
     }
 
     private void acceptUser(Long chatId, User user) {
-        boolean isMatched = matchedPeopleRepo.findAll().stream()
+        boolean isMatched = matchedPeopleRepository.findAll().stream()
                 .anyMatch(entity -> entity.getTelegramIdSecond().equals(chatId.toString())
                                     && entity.getTelegramIdFirst().equals(user.getTelegramId()));
 
         if (isMatched) {
             String reciprocity = "You have reciprocity!\n";
             String message = makeMessageFromUserInfoWithName(
-                    userRepo.findByTelegramId(chatId.toString()).get().getUserInfo());
+                    userRepository.findByTelegramId(chatId.toString()).get().getUserInfo());
             SendMessage sendMessage = SendMessage.builder()
                     .text(reciprocity + message)
                     .chatId(user.getTelegramId())
@@ -124,7 +123,7 @@ public class SearchProfilesSequence implements SequenceHandler {
             MatchedPeople matchedPeople = new MatchedPeople();
             matchedPeople.setTelegramIdFirst(chatId.toString());
             matchedPeople.setTelegramIdSecond(user.getTelegramId());
-            matchedPeopleRepo.save(matchedPeople);
+            matchedPeopleRepository.save(matchedPeople);
         }
     }
 

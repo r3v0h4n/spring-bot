@@ -2,39 +2,33 @@ package com.art.meetbot.bot.commands;
 
 import com.art.meetbot.bot.handle.Handler;
 import com.art.meetbot.bot.handle.RequestHandler;
-import com.art.meetbot.bot.util.KeyboardFactory;
+import com.art.meetbot.bot.util.MessageUtils;
 import com.art.meetbot.entity.register.CommandReg;
 import com.art.meetbot.entity.repo.register.CommandRegRepository;
-import com.art.meetbot.entity.repo.user.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
-@Handler("/search")
+@Handler("/test")
 @Component
 @Slf4j
-public class SearchProfileCommand implements RequestHandler {
+@RequiredArgsConstructor
+public class TestCommand implements RequestHandler {
     private final CommandRegRepository commandRegRepository;
 
-    public SearchProfileCommand(CommandRegRepository commandRegRepository, UserRepository userRepository) {
-        this.commandRegRepository = commandRegRepository;
-    }
 
     @Override
     public BotApiMethod<Message> execute(Message message) {
-        log.info("Start searching for user with chatId" + message.getChatId());
+        log.info("Start creating profile for user with chatId" + message.getChatId());
         CommandReg commandReg = commandRegRepository.findByChatId(message.getChatId())
                 .orElse(new CommandReg(message.getChatId()));
 
         commandReg.setState(0);
-        commandReg.setSeqName("searching-profiles-seq");
+        commandReg.setSeqName("test-seq");
         commandRegRepository.save(commandReg);
-        return SendMessage.builder()
-                .text("Let's start searching")
-                .chatId(String.valueOf(message.getChatId()))
-                .replyMarkup(KeyboardFactory.yesNo())
-                .build();
+
+        return MessageUtils.sendText("Тест на далбайоба", message);
     }
 }

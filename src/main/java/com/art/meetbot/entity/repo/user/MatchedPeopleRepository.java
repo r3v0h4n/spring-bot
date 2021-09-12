@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
 
-public interface MatchedPeopleRepo extends JpaRepository<MatchedPeople, UUID> {
+public interface MatchedPeopleRepository extends JpaRepository<MatchedPeople, UUID> {
     List<MatchedPeople> findAllByTelegramIdFirstIsOrTelegramIdSecondIs(String id1, String id2);
 }

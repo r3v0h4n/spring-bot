@@ -9,6 +9,6 @@ import java.util.UUID;
 /**
  * @author Arthur Kupriyanov on 20.11.2020
  */
-public interface UserRepo extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByTelegramId(String telegramId);
 }

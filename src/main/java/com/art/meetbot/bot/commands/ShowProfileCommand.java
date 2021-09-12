@@ -4,7 +4,7 @@ import com.art.meetbot.bot.MeetBot;
 import com.art.meetbot.bot.handle.Handler;
 import com.art.meetbot.bot.handle.RequestHandler;
 import com.art.meetbot.bot.util.MessageUtils;
-import com.art.meetbot.entity.repo.user.UserRepo;
+import com.art.meetbot.entity.repo.user.UserRepository;
 import com.art.meetbot.entity.user.User;
 import com.art.meetbot.entity.user.UserInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -26,15 +26,15 @@ import java.util.Optional;
 @Slf4j
 public class ShowProfileCommand implements RequestHandler {
 
-    private final UserRepo userRepo;
+    private final UserRepository userRepository;
 
-    public ShowProfileCommand(UserRepo userRepo) {
-        this.userRepo = userRepo;
+    public ShowProfileCommand(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
     public BotApiMethod<Message> execute(Message message) {
-        Optional<User> byTelegramId = userRepo.findByTelegramId(String.valueOf(message.getChatId()));
+        Optional<User> byTelegramId = userRepository.findByTelegramId(String.valueOf(message.getChatId()));
 
         return byTelegramId.map(user -> {
             if (user.getUserInfo().getPhotoId() != null) {

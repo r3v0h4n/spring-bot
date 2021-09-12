@@ -4,8 +4,8 @@ import com.art.meetbot.bot.handle.Handler;
 import com.art.meetbot.bot.handle.RequestHandler;
 import com.art.meetbot.bot.util.MessageUtils;
 import com.art.meetbot.entity.register.CommandReg;
-import com.art.meetbot.entity.repo.register.CommandRegRepo;
-import com.art.meetbot.entity.repo.user.UserRepo;
+import com.art.meetbot.entity.repo.register.CommandRegRepository;
+import com.art.meetbot.entity.repo.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -15,27 +15,27 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @Component
 @Slf4j
 public class CreateProfileCommand implements RequestHandler {
-    private final CommandRegRepo commandRegRepo;
-    private final UserRepo userRepo;
+    private final CommandRegRepository commandRegRepository;
+    private final UserRepository userRepository;
 
-    public CreateProfileCommand(CommandRegRepo commandRegRepo, UserRepo userRepo) {
-        this.commandRegRepo = commandRegRepo;
-        this.userRepo = userRepo;
+    public CreateProfileCommand(CommandRegRepository commandRegRepository, UserRepository userRepository) {
+        this.commandRegRepository = commandRegRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
     public BotApiMethod<Message> execute(Message message) {
         log.info("Start creating profile for user with chatId" + message.getChatId());
-        CommandReg commandReg = commandRegRepo.findByChatId(message.getChatId())
+        CommandReg commandReg = commandRegRepository.findByChatId(message.getChatId())
                 .orElse(new CommandReg(message.getChatId()));
 
         commandReg.setState(0);
         commandReg.setSeqName("create-profile-seq");
-        commandRegRepo.save(commandReg);
+        commandRegRepository.save(commandReg);
 
         // remove old user data
-        userRepo.findByTelegramId(String.valueOf(message.getChatId()))
-                .ifPresent(userRepo::delete);
+        userRepository.findByTelegramId(String.valueOf(message.getChatId()))
+                .ifPresent(userRepository::delete);
 
         return MessageUtils.sendText("Let's start creating a profile. \nAnswer a series of questions. \n\nRemember that this data will be seen by other users \n Old profile deleted \n " +
                                      "\nEnter your name:", message);

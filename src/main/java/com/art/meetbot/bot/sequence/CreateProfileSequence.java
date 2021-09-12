@@ -5,8 +5,8 @@ import com.art.meetbot.bot.handle.SequenceHandler;
 import com.art.meetbot.bot.util.KeyboardFactory;
 import com.art.meetbot.bot.util.MessageUtils;
 import com.art.meetbot.entity.register.CommandReg;
-import com.art.meetbot.entity.repo.register.CommandRegRepo;
-import com.art.meetbot.entity.repo.user.UserRepo;
+import com.art.meetbot.entity.repo.register.CommandRegRepository;
+import com.art.meetbot.entity.repo.user.UserRepository;
 import com.art.meetbot.entity.user.Sex;
 import com.art.meetbot.entity.user.User;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +24,12 @@ import java.util.List;
 @Sequence("create-profile-seq")
 @Component
 public class CreateProfileSequence implements SequenceHandler {
-    private final CommandRegRepo commandRegRepo;
-    private final UserRepo userRepo;
+    private final CommandRegRepository commandRegRepository;
+    private final UserRepository userRepository;
 
-    public CreateProfileSequence(CommandRegRepo commandRegRepo, UserRepo userRepo) {
-        this.commandRegRepo = commandRegRepo;
-        this.userRepo = userRepo;
+    public CreateProfileSequence(CommandRegRepository commandRegRepository, UserRepository userRepository) {
+        this.commandRegRepository = commandRegRepository;
+        this.userRepository = userRepository;
     }
 
     // A lot of duplicate code at this method
@@ -38,20 +38,20 @@ public class CreateProfileSequence implements SequenceHandler {
     public BotApiMethod<? extends BotApiObject> handleCommand(Message message, int state) {
         log.debug("Received command " + message.getText() + " with state : " + state);
 
-        CommandReg commandReg = commandRegRepo.findByChatId(message.getChatId())
+        CommandReg commandReg = commandRegRepository.findByChatId(message.getChatId())
                 .orElseGet(() -> {
                     log.warn("Command reg is not found for chat " + message.getChatId());
                     return new CommandReg();
                 });
 
-        User user = userRepo.findByTelegramId(message.getChatId().toString())
+        User user = userRepository.findByTelegramId(message.getChatId().toString())
                 .orElse(new User(String.valueOf(message.getChatId())));
 
         switch (state) {
             case 0 -> {
                 user.getUserInfo().setName(message.getText());
                 changeState(1, commandReg);
-                userRepo.save(user);
+                userRepository.save(user);
                 return MessageUtils.sendText("Your birth date: ", message);
             }
             case 1 -> {
@@ -64,7 +64,7 @@ public class CreateProfileSequence implements SequenceHandler {
                     return MessageUtils.sendText("Please, input a number!", message);
                 }
 
-                userRepo.save(user);
+                userRepository.save(user);
                 return SendMessage.builder()
                         .text("Select gender")
                         .chatId(String.valueOf(message.getChatId()))
@@ -75,12 +75,12 @@ public class CreateProfileSequence implements SequenceHandler {
                 changeState(3, commandReg);
                 user.getUserInfo().setSex(Sex.getGender(message.getText()));
 
-                userRepo.save(user);
+                userRepository.save(user);
                 return MessageUtils.sendText("Describe yourself: (who you are, what do you like and etc)", message);
             }
             case 3 -> {
                 user.getUserInfo().setDescription(message.getText());
-                userRepo.save(user);
+                userRepository.save(user);
                 changeState(4, commandReg);
                 return SendMessage.builder()
                         .text("Add your profile photo." +
@@ -92,15 +92,15 @@ public class CreateProfileSequence implements SequenceHandler {
 
             case 4 -> {
                 if ("no".equals(message.getText())) {
-                    commandRegRepo.delete(commandReg);
+                    commandRegRepository.delete(commandReg);
                     return MessageUtils.sendText("Your profile ready without photo. You can add it later", message);
                 }
 
                 if (message.hasPhoto()) {
                     log.debug("Message has a photo");
                     receivedPhoto(message, user);
-                    userRepo.save(user);
-                    commandRegRepo.delete(commandReg);
+                    userRepository.save(user);
+                    commandRegRepository.delete(commandReg);
                     return MessageUtils.sendText("Successfully created profile", message);
                 } else {
                     return SendMessage.builder()
@@ -112,11 +112,11 @@ public class CreateProfileSequence implements SequenceHandler {
 
             }
 
-            default -> commandRegRepo.delete(commandReg);
+            default -> commandRegRepository.delete(commandReg);
         }
 
         log.warn("something strange");
-        commandRegRepo.delete(commandReg);
+        commandRegRepository.delete(commandReg);
         return SendMessage.builder()
                 .text("Command not found")
                 .chatId(String.valueOf(message.getChatId()))
@@ -133,12 +133,12 @@ public class CreateProfileSequence implements SequenceHandler {
         log.debug("Upload photo to database");
 
         user.getUserInfo().setPhotoId(photo_id);
-        userRepo.save(user);
+        userRepository.save(user);
     }
 
     private void changeState(int newState, CommandReg commandReg) {
         commandReg.setState(newState);
-        commandRegRepo.save(commandReg);
+        commandRegRepository.save(commandReg);
     }
 
 }
