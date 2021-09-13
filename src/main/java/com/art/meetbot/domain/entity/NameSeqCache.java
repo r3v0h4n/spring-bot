@@ -1,4 +1,4 @@
-package com.art.meetbot.entity.cache;
+package com.art.meetbot.domain.entity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

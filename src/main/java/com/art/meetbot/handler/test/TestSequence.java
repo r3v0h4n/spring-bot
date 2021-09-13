@@ -1,11 +1,12 @@
-package com.art.meetbot.bot.sequence;
+package com.art.meetbot.handler.test;
 
+import com.art.meetbot.bot.handle.IgnoreActive;
 import com.art.meetbot.bot.handle.MessageHandler;
 import com.art.meetbot.bot.handle.Sequence;
 import com.art.meetbot.bot.handle.SequenceHandler;
 import com.art.meetbot.bot.util.MessageUtils;
-import com.art.meetbot.entity.register.CommandReg;
-import com.art.meetbot.entity.repo.register.CommandRegRepository;
+import com.art.meetbot.domain.entity.CommandReg;
+import com.art.meetbot.domain.repository.CommandRegRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

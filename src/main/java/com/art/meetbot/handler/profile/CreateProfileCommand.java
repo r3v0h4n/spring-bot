@@ -1,11 +1,11 @@
-package com.art.meetbot.bot.commands;
+package com.art.meetbot.handler.profile;
 
 import com.art.meetbot.bot.handle.Handler;
 import com.art.meetbot.bot.handle.RequestHandler;
 import com.art.meetbot.bot.util.MessageUtils;
-import com.art.meetbot.entity.register.CommandReg;
-import com.art.meetbot.entity.repo.register.CommandRegRepository;
-import com.art.meetbot.entity.repo.user.UserRepository;
+import com.art.meetbot.domain.entity.CommandReg;
+import com.art.meetbot.domain.repository.CommandRegRepository;
+import com.art.meetbot.domain.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;

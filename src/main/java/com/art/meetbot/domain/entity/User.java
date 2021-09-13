@@ -1,4 +1,4 @@
-package com.art.meetbot.entity.user;
+package com.art.meetbot.domain.entity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +24,8 @@ public class User {
 
     @OneToOne(cascade = CascadeType.ALL)
     private UserInfo userInfo = new UserInfo();
+
+    private boolean active;
 
     public User(String telegramId) {
         this.telegramId = telegramId;

@@ -1,6 +1,6 @@
-package com.art.meetbot.entity.repo.register;
+package com.art.meetbot.domain.repository;
 
-import com.art.meetbot.entity.register.CommandReg;
+import com.art.meetbot.domain.entity.CommandReg;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

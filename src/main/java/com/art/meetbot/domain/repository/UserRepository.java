@@ -1,6 +1,6 @@
-package com.art.meetbot.entity.repo.user;
+package com.art.meetbot.domain.repository;
 
-import com.art.meetbot.entity.user.User;
+import com.art.meetbot.domain.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

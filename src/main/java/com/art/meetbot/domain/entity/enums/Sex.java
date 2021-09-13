@@ -1,4 +1,4 @@
-package com.art.meetbot.entity.user;
+package com.art.meetbot.domain.entity.enums;
 
 /**
  * @author Arthur Kupriyanov on 20.11.2020

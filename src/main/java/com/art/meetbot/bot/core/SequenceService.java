@@ -1,11 +1,17 @@
 package com.art.meetbot.bot.core;
 
 import com.art.meetbot.bot.core.loader.SequenceLoader;
+import com.art.meetbot.bot.handle.IgnoreActive;
 import com.art.meetbot.bot.handle.MessageHandler;
+import com.art.meetbot.bot.handle.RequestHandler;
 import com.art.meetbot.bot.handle.SequenceHandler;
-import com.art.meetbot.entity.register.CommandReg;
-import com.art.meetbot.entity.repo.register.CommandRegRepository;
-import com.google.common.eventbus.Subscribe;
+import com.art.meetbot.bot.util.MessageUtils;
+import com.art.meetbot.domain.entity.CommandReg;
+import com.art.meetbot.domain.entity.User;
+import com.art.meetbot.domain.repository.CommandRegRepository;
+import com.art.meetbot.domain.repository.UserRepository;
+import com.art.meetbot.domain.service.UserService;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.interfaces.BotApiObject;
@@ -24,15 +30,12 @@ import java.util.Optional;
  */
 @Service
 @Slf4j
+@AllArgsConstructor
 public class SequenceService {
     private static final Map<String, SequenceHandler> seqMap = new HashMap<>();
     private final SequenceLoader sequenceLoader;
     private final CommandRegRepository commandRegRepository;
-
-    public SequenceService(SequenceLoader sequenceLoader, CommandRegRepository commandRegRepository) {
-        this.sequenceLoader = sequenceLoader;
-        this.commandRegRepository = commandRegRepository;
-    }
+    private final UserService userService;
 
     @PostConstruct
     void init() {
@@ -49,17 +52,36 @@ public class SequenceService {
     public Optional<BotApiMethod<? extends BotApiObject>> handle(Message message) throws InvocationTargetException, IllegalAccessException {
         Optional<CommandReg> commandRegOptional = commandRegRepository.findByChatId(message.getChatId());
         BotApiMethod<? extends BotApiObject> result = null;
+        // if user have sequence in db
         if (commandRegOptional.isPresent()) {
-            CommandReg commandReg = commandRegOptional.get();
-            if (seqMap.containsKey(commandReg.getSeqName())) {
-                SequenceHandler sequenceInstance = seqMap.get(commandReg.getSeqName());
-                result = findMethod(sequenceInstance, message, commandReg.getState())
-                        .orElse(sequenceInstance.handleCommand(message, commandReg.getState()));
-            } else {
-                log.warn("Sequence not found");
+            // found sequence handler
+            Optional<SequenceHandler> sequenceHandlerOptional = resolveSequenceHandler(commandRegOptional.get());
+            if (sequenceHandlerOptional.isPresent()) {
+                // get result of sequence handler
+                result = getResult(sequenceHandlerOptional.get(), message, commandRegOptional.get().getState());
             }
         }
         return Optional.ofNullable(result);
+    }
+
+    private Optional<SequenceHandler> resolveSequenceHandler(CommandReg commandReg) {
+            // if sequence handler exists
+            if (seqMap.containsKey(commandReg.getSeqName())) {
+                return Optional.of(seqMap.get(commandReg.getSeqName()));
+            }
+            return Optional.empty();
+    }
+
+    private BotApiMethod<? extends BotApiObject> getResult(SequenceHandler sequenceHandler, Message message, int state) throws InvocationTargetException, IllegalAccessException {
+        User user = userService.getOrCreateUser(message.getChatId().toString());
+        Class<?> sequenceClass = sequenceHandler.getClass();
+        if (user.isActive() || sequenceClass.isAnnotationPresent(IgnoreActive.class)) {
+            return findMethod(sequenceHandler, message, state)
+                    .orElse(sequenceHandler.handleCommand(message, state));
+        }
+        else {
+            return MessageUtils.sendUserNotActive(message);
+        }
     }
 
     /**

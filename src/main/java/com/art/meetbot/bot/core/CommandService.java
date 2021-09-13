@@ -3,12 +3,19 @@ package com.art.meetbot.bot.core;
 import com.art.meetbot.bot.core.loader.CommandLoader;
 import com.art.meetbot.bot.core.loader.LogLoader;
 import com.art.meetbot.bot.handle.ExecutionTime;
+import com.art.meetbot.bot.handle.IgnoreActive;
 import com.art.meetbot.bot.handle.Log;
 import com.art.meetbot.bot.handle.RequestHandler;
 import com.art.meetbot.bot.handle.RequestLogger;
+import com.art.meetbot.bot.util.MessageUtils;
+import com.art.meetbot.domain.entity.User;
+import com.art.meetbot.domain.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.telegram.telegrambots.meta.api.interfaces.BotApiObject;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
@@ -26,10 +33,12 @@ public class CommandService {
     private static final Map<String, Set<RequestLogger>> loggersMap = new HashMap<>();
     private final CommandLoader commandLoader;
     private final LogLoader logLoader;
+    private final UserService userService;
 
-    private CommandService(CommandLoader commandLoader, LogLoader logLoader) {
+    private CommandService(CommandLoader commandLoader, LogLoader logLoader, UserService userService) {
         this.commandLoader = commandLoader;
         this.logLoader = logLoader;
+        this.userService = userService;
     }
 
     @PostConstruct
@@ -47,17 +56,23 @@ public class CommandService {
         loggersMap.putAll(logLoader.loadLoggers());
     }
 
-    public RequestHandler serve(String message) {
-        for (Map.Entry<String, RequestHandler> entry : commandsMap.entrySet()) {
-            if (entry.getKey().equals(message)) {
-                return entry.getValue();
-            }
+    public BotApiMethod<Message> handle(Message message) {
+        if (commandsMap.containsKey(message.getText())) {
+            return getResult(message, commandsMap.get(message.getText()));
+        } else {
+            return MessageUtils.commandNotFound(message);
         }
+    }
 
-        return msg -> SendMessage.builder()
-                .text("Команда не найдена")
-                .chatId(String.valueOf(msg.getChatId()))
-                .build();
+    private BotApiMethod<Message> getResult(Message message, RequestHandler requestHandler) {
+        User user = userService.getOrCreateUser(message.getChatId().toString());
+        Class<?> requestClass = requestHandler.getClass();
+        if (user.isActive() || requestClass.isAnnotationPresent(IgnoreActive.class)) {
+            return requestHandler.execute(message);
+        }
+        else {
+            return MessageUtils.sendUserNotActive(message);
+        }
     }
 
     public Set<RequestLogger> findLoggers(String message, ExecutionTime executionTime) {

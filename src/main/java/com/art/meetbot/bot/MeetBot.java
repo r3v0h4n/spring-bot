@@ -3,6 +3,8 @@ package com.art.meetbot.bot;
 import com.art.meetbot.bot.core.CommandService;
 import com.art.meetbot.bot.core.SequenceService;
 import com.art.meetbot.bot.handle.ExecutionTime;
+import com.art.meetbot.domain.entity.User;
+import com.art.meetbot.domain.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -29,13 +31,15 @@ public class MeetBot extends TelegramLongPollingBot {
 
     private final CommandService commandService;
     private final SequenceService sequenceService;
+    private final UserService userService;
 
     // necessary measure
     public static MeetBot instance;
 
-    public MeetBot(CommandService commandService, SequenceService sequenceService) {
+    public MeetBot(CommandService commandService, SequenceService sequenceService, UserService userService) {
         this.commandService = commandService;
         this.sequenceService = sequenceService;
+        this.userService = userService;
         instance = this;
     }
 
@@ -63,12 +67,12 @@ public class MeetBot extends TelegramLongPollingBot {
             }
 
             if (message != null) {
-
                 // run "before" loggers
                 commandService.findLoggers(message.getText(), ExecutionTime.BEFORE)
                         .forEach(logger -> logger.execute(message));
 
                 Optional<BotApiMethod<? extends BotApiObject>> sequenceHandle = sequenceService.handle(message);
+
 
                 if (sequenceHandle.isPresent()) {
                     log.debug("Found handler");
@@ -77,8 +81,8 @@ public class MeetBot extends TelegramLongPollingBot {
                 }
 
                 // command execution
-                BotApiMethod<Message> response;
-                this.execute(response = commandService.serve(message.getText()).execute(message));
+                BotApiMethod<Message> response = commandService.handle(message);
+                this.execute(response);
 
                 // run "after" loggers
                 commandService.findLoggers(message.getText(), ExecutionTime.AFTER)

@@ -1,5 +1,6 @@
-package com.art.meetbot.entity.user;
+package com.art.meetbot.domain.entity;
 
+import com.art.meetbot.domain.entity.enums.Sex;
 import lombok.Data;
 
 import javax.persistence.*;

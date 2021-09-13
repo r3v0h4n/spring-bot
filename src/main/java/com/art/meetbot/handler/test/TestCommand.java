@@ -1,10 +1,11 @@
-package com.art.meetbot.bot.commands;
+package com.art.meetbot.handler.test;
 
 import com.art.meetbot.bot.handle.Handler;
+import com.art.meetbot.bot.handle.IgnoreActive;
 import com.art.meetbot.bot.handle.RequestHandler;
 import com.art.meetbot.bot.util.MessageUtils;
-import com.art.meetbot.entity.register.CommandReg;
-import com.art.meetbot.entity.repo.register.CommandRegRepository;
+import com.art.meetbot.domain.entity.CommandReg;
+import com.art.meetbot.domain.repository.CommandRegRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @RequiredArgsConstructor
 public class TestCommand implements RequestHandler {
     private final CommandRegRepository commandRegRepository;
-
 
     @Override
     public BotApiMethod<Message> execute(Message message) {

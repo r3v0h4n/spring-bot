@@ -1,6 +1,6 @@
-package com.art.meetbot.entity.repo.cache;
+package com.art.meetbot.domain.repository;
 
-import com.art.meetbot.entity.cache.NameSeqCache;
+import com.art.meetbot.domain.entity.NameSeqCache;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

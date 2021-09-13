@@ -1,13 +1,11 @@
-package com.art.meetbot.entity.register;
+package com.art.meetbot.domain.entity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * @author Arthur Kupriyanov on 21.11.2020
